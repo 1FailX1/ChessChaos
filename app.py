@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 # Path to Stockfish - update this to the path on your system
-STOCKFISH_PATH = "C:\\Development\\ChessChaos\\stockfish\\stockfish-windows-x86-64-avx2.exe"  # Adjust this path as needed
+STOCKFISH_PATH = "stockfish\\stockfish-windows-x86-64-avx2.exe"  # Adjust this path as needed
 
 # Check if Stockfish exists
 if not os.path.exists(STOCKFISH_PATH):
@@ -36,7 +36,7 @@ def get_move():
         engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
         
         # Set engine skill level (1-20, 20 being the strongest)
-        engine.configure({"Skill Level": 10})
+        engine.configure({"Skill Level": 0})
         
         # Get the best move with a time limit
         result = engine.play(board, chess.engine.Limit(time=1.0))

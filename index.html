@@ -3,221 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basic Chess Game</title>
+    <title>BischlBot Chess</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4a6fa5;
+            --primary-dark: #334e7a;
+            --secondary: #f4b942;
+            --dark: #2c3e50;
+            --light: #f9f9f9;
+            --square-light: #f2e5bc;
+            --square-dark: #b58863;
+            --square-selected: #67b7dc;
+            --square-movable: #92d050;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--dark);
             display: flex;
             justify-content: center;
-            margin-top: 50px;
+            align-items: center;
+            padding: 20px;
         }
+
         #app {
-            width: 500px;
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        h1 {
+            color: var(--primary-dark);
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+
+        .tagline {
+            color: var(--dark);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .board-container {
+            position: relative;
+        }
+
         .board {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            width: 400px;
-            height: 400px;
-            border: 2px solid #333;
+            width: 480px;
+            height: 480px;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
+
         .square {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 30px;
             cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
         }
+
         .white {
-            background-color: #f0d9b5;
+            background-color: var(--square-light);
         }
+
         .black {
-            background-color: #b58863;
+            background-color: var(--square-dark);
         }
+
         .selected {
-            background-color: #58a6ff;
+            background-color: var(--square-selected);
         }
+
         .movable {
-            background-color: #98c379;
+            background-color: var(--square-movable);
         }
+
+        .piece-image {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+        transition: transform 0.2s ease;
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+        cursor: grab;
+        /* Remove pointer-events: none; to enable dragging */
+    }
+
+    .dragging {
+        opacity: 0.6;
+        cursor: grabbing;
+    }
+
+    .droppable {
+        background-color: var(--square-movable) !important;
+    }
+
+        .square:hover .piece-image {
+            transform: scale(1.08);
+        }
+
+        .game-info {
+            width: 100%;
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .status {
-            margin-top: 20px;
-            font-weight: bold;
+            background-color: var(--light);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 300px;
+            min-height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
         }
+
+        .thinking {
+            background-color: var(--secondary);
+            color: var(--dark);
+        }
+
         .controls {
             margin-top: 20px;
+            display: flex;
+            gap: 15px;
         }
+
         button {
-            padding: 8px 16px;
-            margin-right: 10px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button.secondary {
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        button.secondary:hover {
+            background-color: #e9e9e9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .board {
+                width: 320px;
+                height: 320px;
+            }
+
+            .square {
+                width: 40px;
+                height: 40px;
+            }
+
+            .piece-image {
+                width: 36px;
+                height: 36px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .piece-image {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+    cursor: grab;
+}
+
+.dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+}
+
+.droppable {
+    background-color: var(--square-movable) !important;
+}
         }
     </style>
 </head>
 <body>
-    <div id="app">
-        <h1>Chess Game vs Stockfish</h1>
-        <div class="board">
-            <div 
-                v-for="(square, index) in squares" 
-                :key="index" 
-                :class="['square', square.color, { 
-                    'selected': selectedSquare === square.position,
-                    'movable': possibleMoves.includes(square.position)
-                }]"
-                @click="handleSquareClick(square.position)"
-            >
-                {{ square.piece }}
-            </div>
-        </div>
-        <div class="status">{{ status }}</div>
-        <div class="controls">
-            <button @click="newGame">New Game</button>
-            <button @click="undoMove">Undo Move</button>
-        </div>
+<div id="app">
+    <div class="game-header">
+        <h1>BischlBot Chess</h1>
+        <p class="tagline">Play against the advanced BischlBot AI</p>
     </div>
 
-    <script>
-        const app = Vue.createApp({
-            data() {
-                return {
-                    game: new Chess(), // Initialize the chess.js game instance
-                    squares: [], // Board squares
-                    selectedSquare: null,
-                    possibleMoves: [],
-                    status: 'Your turn (white)',
-                    thinking: false
-                };
-            },
-            methods: {
-                initializeBoard() {
-                    // Initialize the board with pieces and colors
-                    const board = this.game.board();
-                    this.squares = board.flatMap((row, rowIndex) =>
-                        row.map((piece, colIndex) => ({
-                            position: this.getSquareName(rowIndex, colIndex),
-                            piece: piece ? piece.type.toUpperCase() : '',
-                            color: piece && piece.color === 'w' ? 'white' : 'black'
-                        }))
-                    );
-                },
-                getSquareName(row, col) {
-                    // Convert row and column to chess notation (e.g., "a1")
-                    return String.fromCharCode(97 + col) + (8 - row);
-                },
-                handleSquareClick(position) {
-                    if (this.thinking) return; // Prevent interaction during AI's turn
+    <div class="game-container">
+        <div class="board-container">
+            <div class="board">
+                <div
+    v-for="(square, index) in squares"
+    :key="index"
+    :class="['square', square.color, {
+        'selected': selectedSquare === square.position,
+        'movable': possibleMoves.includes(square.position),
+        'droppable': draggedPiece && possibleMoves.includes(square.position)
+    }]"
+    @click="handleSquareClick(square.position)"
+    @dragover.prevent
+    @drop="handleDrop($event, square.position)"
+>
+                    <img v-if="square.pieceImage"
+     :src="square.pieceImage"
+     alt=""
+     class="piece-image"
+     draggable="true"
+     @dragstart="handleDragStart($event, square.position)"
+     @dragend="handleDragEnd">
+                </div>
+            </div>
+        </div>
 
-                    if (this.selectedSquare === null) {
-                        // Select a piece
-                        const square = this.squares.find(s => s.position === position);
-                        if (square && square.piece) {
-                            this.selectedSquare = position;
-                            this.possibleMoves = this.game.moves({ square: position, verbose: true }).map(m => m.to);
-                        }
-                    } else if (this.selectedSquare === position) {
-                        // Deselect the piece
+        <div class="game-info">
+            <div :class="['status', {'thinking': thinking}]">{{ status }}</div>
+            <div class="controls">
+                <button class="primary" @click="newGame">New Game</button>
+                <button class="secondary" @click="undoMove">Undo Move</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                game: new Chess(), // Initialize the chess.js game instance
+                squares: [], // Board squares
+                selectedSquare: null,
+                possibleMoves: [],
+                status: 'Your turn (white)',
+                thinking: false,
+                draggedPiece: null
+            };
+        },
+        methods: {
+            initializeBoard() {
+    // Map chess.js piece notation to image filenames
+    const pieceMappings = {
+        'w': {
+            'p': 'white-pawn.png',
+            'r': 'white-rook.png',
+            'n': 'white-knight.png',
+            'b': 'white-bishop.png',
+            'q': 'white-queen.png',
+            'k': 'white-king.png'
+        },
+        'b': {
+            'p': 'black-pawn.png',
+            'r': 'black-rook.png',
+            'n': 'black-knight.png',
+            'b': 'black-bishop.png',
+            'q': 'black-queen.png',
+            'k': 'black-king.png'
+        }
+    };
+
+    // Initialize the board with pieces and colors
+    const board = this.game.board();
+    this.squares = board.flatMap((row, rowIndex) =>
+        row.map((piece, colIndex) => ({
+            position: this.getSquareName(rowIndex, colIndex),
+            pieceImage: piece ? `/static/assets/${pieceMappings[piece.color][piece.type]}` : '',
+            color: (rowIndex + colIndex) % 2 === 0 ? 'black' : 'white',
+            piece: piece // Store the piece object for dragging
+        }))
+    );
+},
+            getSquareName(row, col) {
+                // Convert row and column to chess notation (e.g., "a1")
+                return String.fromCharCode(97 + col) + (8 - row);
+            },
+            handleSquareClick(position) {
+                if (this.thinking) return; // Prevent interaction during AI's turn
+
+                if (this.selectedSquare === null) {
+                    // Select a piece
+                    const square = this.squares.find(s => s.position === position);
+                    if (square && square.pieceImage) {
+                        this.selectedSquare = position;
+                        this.possibleMoves = this.game.moves({square: position, verbose: true}).map(m => m.to);
+                    }
+                } else if (this.selectedSquare === position) {
+                    // Deselect the piece
+                    this.selectedSquare = null;
+                    this.possibleMoves = [];
+                } else if (this.possibleMoves.includes(position)) {
+                    // Make a move
+                    const move = this.game.move({
+                        from: this.selectedSquare,
+                        to: position,
+                        promotion: 'q' // Always promote to queen for simplicity
+                    });
+
+                    if (move) {
+                        console.log('Player move:', move);
                         this.selectedSquare = null;
                         this.possibleMoves = [];
-                    } else if (this.possibleMoves.includes(position)) {
-                        // Make a move
-                        const move = this.game.move({
-                            from: this.selectedSquare,
-                            to: position,
-                            promotion: 'q' // Always promote to queen for simplicity
-                        });
+                        this.initializeBoard();
 
-                        if (move) {
-                            console.log('Player move:', move); // Log the player's move
-                            this.selectedSquare = null;
-                            this.possibleMoves = [];
-                            this.initializeBoard(); // Update the board visually
-
-                            if (this.game.game_over()) {
-                                this.updateStatus();
-                            } else {
-                                // AI's turn
-                                this.makeStockfishMove();
-                            }
+                        if (this.game.game_over()) {
+                            this.updateStatus();
                         } else {
-                            console.error('Invalid move attempted by player');
+                            // AI's turn
+                            this.makeBischlBotMove();
                         }
-                    }
-                },
-                makeStockfishMove() {
-                    this.thinking = true;
-                    this.status = 'Stockfish is thinking...';
-
-                    // Get current position in FEN notation
-                    const fen = this.game.fen();
-                    console.log('Sending FEN to backend:', fen); // Log the FEN being sent
-
-                    // Make API call to the Python backend
-                    fetch('/api/move', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ fen: fen })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('Backend response:', data); // Log the backend response
-                            if (data.move) {
-                                console.log('Current turn:', this.game.turn()); // Log the current player ('w' or 'b')
-                                console.log('Current board FEN:', this.game.fen()); // Log the current board state
-                                console.log('Move received from Stockfish:', data.move); // Log the move received from Stockfish
-
-                                // Apply Stockfish's move
-                                const move = this.game.move(data.move);
-                                if (move) {
-                                    console.log('Stockfish move applied:', move); // Log Stockfish's move
-                                    this.initializeBoard(); // Update the board visually
-                                    this.updateStatus();
-                                } else {
-                                    console.error('Invalid move from Stockfish:', data.move);
-                                    console.error('Current board FEN after failure:', this.game.fen());
-                                    this.status = 'Error: Invalid move from Stockfish';
-                                }
-                            } else if (data.error) {
-                                console.error('Error from backend:', data.error);
-                                this.status = 'Error: ' + data.error;
-                            }
-                            this.thinking = false;
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            this.status = 'Error connecting to Stockfish';
-                            this.thinking = false;
-                        });
-                },
-                updateStatus() {
-                    if (this.game.in_checkmate()) {
-                        this.status = this.game.turn() === 'w' ? 'Checkmate! Stockfish wins.' : 'Checkmate! You win!';
-                    } else if (this.game.in_draw()) {
-                        this.status = 'Game over! It\'s a draw.';
-                    } else if (this.game.in_check()) {
-                        this.status = this.game.turn() === 'w' ? 'You are in check!' : 'Stockfish is in check!';
                     } else {
-                        this.status = this.game.turn() === 'w' ? 'Your turn (white)' : 'Stockfish\'s turn (black)';
+                        console.error('Invalid move attempted by player');
                     }
-                },
-                newGame() {
-                    this.game = new Chess();
-                    this.initializeBoard();
-                    this.status = 'Your turn (white)';
-                    this.thinking = false;
                 }
             },
-            mounted() {
-                this.initializeBoard(); // Initialize the board when the app loads
-            }
-        });
+            makeBischlBotMove() {
+                this.thinking = true;
+                this.status = 'BischlBot is thinking...';
 
-        app.mount('#app');
-    </script>
+                // Get current position in FEN notation
+                const fen = this.game.fen();
+                console.log('Sending FEN to backend:', fen);
+
+                // Make API call to the Python backend
+                fetch('/api/move', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({fen: fen})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Backend response:', data);
+                        this.thinking = false;
+
+                        if (data.move) {
+                            // Convert UCI notation (e7e5) to object format
+                            const moveObj = {
+                                from: data.move.substring(0, 2),
+                                to: data.move.substring(2, 4),
+                                promotion: data.move.length > 4 ? data.move.substring(4, 5) : undefined
+                            };
+
+                            // Apply BischlBot's move with the correct format
+                            const move = this.game.move(moveObj);
+
+                            if (move) {
+                                console.log('BischlBot move applied:', move);
+                                this.initializeBoard(); // Update the board visually
+                                this.updateStatus();
+                            } else {
+                                console.error('Invalid move from BischlBot:', data.move);
+                                console.error('Current board FEN after failure:', this.game.fen());
+                                this.status = 'Error: Invalid move from BischlBot';
+                            }
+                        } else if (data.error) {
+                            console.error('Error from backend:', data.error);
+                            this.status = 'Error: ' + data.error;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.status = 'Error connecting to BischlBot';
+                        this.thinking = false;
+                    });
+            },
+            updateStatus() {
+                if (this.game.in_checkmate()) {
+                    this.status = this.game.turn() === 'w' ? 'Checkmate! BischlBot wins.' : 'Checkmate! You win!';
+                } else if (this.game.in_draw()) {
+                    this.status = 'Game over! It\'s a draw.';
+                } else if (this.game.in_check()) {
+                    this.status = this.game.turn() === 'w' ? 'You are in check!' : 'BischlBot is in check!';
+                } else {
+                    this.status = this.game.turn() === 'w' ? 'Your turn (white)' : 'BischlBot\'s turn (black)';
+                }
+            },
+            newGame() {
+                this.game = new Chess();
+                this.initializeBoard();
+                this.status = 'Your turn (white)';
+                this.thinking = false;
+            },
+            undoMove() {
+                // Undo the last two moves (player's and BischlBot's)
+                this.game.undo(); // Undo BischlBot's move
+                this.game.undo(); // Undo player's move
+                this.initializeBoard();
+                this.updateStatus();
+            }
+        },
+        mounted() {
+            this.initializeBoard(); // Initialize the board when the app loads
+        },
+        handleDragStart(event, position) {
+            if (this.thinking) return false;
+
+            const square = this.squares.find(s => s.position === position);
+            if (!square.pieceImage || (square.piece && square.piece.color !== (this.game.turn() === 'w' ? 'w' : 'b'))) {
+                event.preventDefault();
+                return false;
+            }
+
+            // Set dragged piece data
+            this.draggedPiece = position;
+
+            // Add dragging class
+            event.target.classList.add('dragging');
+
+            // Set drag image
+            event.dataTransfer.setData('text/plain', position);
+            event.dataTransfer.effectAllowed = 'move';
+
+            // Show possible moves
+            this.selectedSquare = position;
+            this.possibleMoves = this.game.moves({square: position, verbose: true}).map(m => m.to);
+        },
+
+        handleDragEnd(event) {
+            event.target.classList.remove('dragging');
+        },
+
+        handleDrop(event, targetPosition) {
+            event.preventDefault();
+
+            if (!this.draggedPiece || !this.possibleMoves.includes(targetPosition)) {
+                this.draggedPiece = null;
+                this.selectedSquare = null;
+                this.possibleMoves = [];
+                return;
+            }
+
+            // Make the move
+            const move = this.game.move({
+                from: this.draggedPiece,
+                to: targetPosition,
+                promotion: 'q' // Always promote to queen for simplicity
+            });
+
+            if (move) {
+                console.log('Player move:', move);
+                this.draggedPiece = null;
+                this.selectedSquare = null;
+                this.possibleMoves = [];
+                this.initializeBoard();
+
+                if (this.game.game_over()) {
+                    this.updateStatus();
+                } else {
+                    // AI's turn
+                    this.makeBischlBotMove();
+                }
+            }
+        }
+    });
+
+    app.mount('#app');
+</script>
 </body>
 </html>
