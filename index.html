@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Chess Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            margin-top: 50px;
+        }
+        #app {
+            width: 500px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            width: 400px;
+            height: 400px;
+            border: 2px solid #333;
+        }
+        .square {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+        }
+        .white {
+            background-color: #f0d9b5;
+        }
+        .black {
+            background-color: #b58863;
+        }
+        .selected {
+            background-color: #58a6ff;
+        }
+        .movable {
+            background-color: #98c379;
+        }
+        .status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Chess Game vs Stockfish</h1>
+        <div class="board">
+            <div 
+                v-for="(square, index) in squares" 
+                :key="index" 
+                :class="['square', square.color, { 
+                    'selected': selectedSquare === square.position,
+                    'movable': possibleMoves.includes(square.position)
+                }]"
+                @click="handleSquareClick(square.position)"
+            >
+                {{ square.piece }}
+            </div>
+        </div>
+        <div class="status">{{ status }}</div>
+        <div class="controls">
+            <button @click="newGame">New Game</button>
+            <button @click="undoMove">Undo Move</button>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    game: new Chess(), // Initialize the chess.js game instance
+                    squares: [], // Board squares
+                    selectedSquare: null,
+                    possibleMoves: [],
+                    status: 'Your turn (white)',
+                    thinking: false
+                };
+            },
+            methods: {
+                initializeBoard() {
+                    // Initialize the board with pieces and colors
+                    const board = this.game.board();
+                    this.squares = board.flatMap((row, rowIndex) =>
+                        row.map((piece, colIndex) => ({
+                            position: this.getSquareName(rowIndex, colIndex),
+                            piece: piece ? piece.type.toUpperCase() : '',
+                            color: piece && piece.color === 'w' ? 'white' : 'black'
+                        }))
+                    );
+                },
+                getSquareName(row, col) {
+                    // Convert row and column to chess notation (e.g., "a1")
+                    return String.fromCharCode(97 + col) + (8 - row);
+                },
+                handleSquareClick(position) {
+                    if (this.thinking) return; // Prevent interaction during AI's turn
+
+                    if (this.selectedSquare === null) {
+                        // Select a piece
+                        const square = this.squares.find(s => s.position === position);
+                        if (square && square.piece) {
+                            this.selectedSquare = position;
+                            this.possibleMoves = this.game.moves({ square: position, verbose: true }).map(m => m.to);
+                        }
+                    } else if (this.selectedSquare === position) {
+                        // Deselect the piece
+                        this.selectedSquare = null;
+                        this.possibleMoves = [];
+                    } else if (this.possibleMoves.includes(position)) {
+                        // Make a move
+                        const move = this.game.move({
+                            from: this.selectedSquare,
+                            to: position,
+                            promotion: 'q' // Always promote to queen for simplicity
+                        });
+
+                        if (move) {
+                            console.log('Player move:', move); // Log the player's move
+                            this.selectedSquare = null;
+                            this.possibleMoves = [];
+                            this.initializeBoard(); // Update the board visually
+
+                            if (this.game.game_over()) {
+                                this.updateStatus();
+                            } else {
+                                // AI's turn
+                                this.makeStockfishMove();
+                            }
+                        } else {
+                            console.error('Invalid move attempted by player');
+                        }
+                    }
+                },
+                makeStockfishMove() {
+                    this.thinking = true;
+                    this.status = 'Stockfish is thinking...';
+
+                    // Get current position in FEN notation
+                    const fen = this.game.fen();
+                    console.log('Sending FEN to backend:', fen); // Log the FEN being sent
+
+                    // Make API call to the Python backend
+                    fetch('/api/move', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ fen: fen })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Backend response:', data); // Log the backend response
+                            if (data.move) {
+                                console.log('Current turn:', this.game.turn()); // Log the current player ('w' or 'b')
+                                console.log('Current board FEN:', this.game.fen()); // Log the current board state
+                                console.log('Move received from Stockfish:', data.move); // Log the move received from Stockfish
+
+                                // Apply Stockfish's move
+                                const move = this.game.move(data.move);
+                                if (move) {
+                                    console.log('Stockfish move applied:', move); // Log Stockfish's move
+                                    this.initializeBoard(); // Update the board visually
+                                    this.updateStatus();
+                                } else {
+                                    console.error('Invalid move from Stockfish:', data.move);
+                                    console.error('Current board FEN after failure:', this.game.fen());
+                                    this.status = 'Error: Invalid move from Stockfish';
+                                }
+                            } else if (data.error) {
+                                console.error('Error from backend:', data.error);
+                                this.status = 'Error: ' + data.error;
+                            }
+                            this.thinking = false;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            this.status = 'Error connecting to Stockfish';
+                            this.thinking = false;
+                        });
+                },
+                updateStatus() {
+                    if (this.game.in_checkmate()) {
+                        this.status = this.game.turn() === 'w' ? 'Checkmate! Stockfish wins.' : 'Checkmate! You win!';
+                    } else if (this.game.in_draw()) {
+                        this.status = 'Game over! It\'s a draw.';
+                    } else if (this.game.in_check()) {
+                        this.status = this.game.turn() === 'w' ? 'You are in check!' : 'Stockfish is in check!';
+                    } else {
+                        this.status = this.game.turn() === 'w' ? 'Your turn (white)' : 'Stockfish\'s turn (black)';
+                    }
+                },
+                newGame() {
+                    this.game = new Chess();
+                    this.initializeBoard();
+                    this.status = 'Your turn (white)';
+                    this.thinking = false;
+                }
+            },
+            mounted() {
+                this.initializeBoard(); // Initialize the board when the app loads
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
