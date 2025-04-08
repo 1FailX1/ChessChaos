@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BischlBot Chess</title>
+    <title>ChessChaos Chess</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
@@ -233,8 +233,8 @@
 <body>
 <div id="app">
     <div class="game-header">
-        <h1>BischlBot Chess</h1>
-        <p class="tagline">Play against the advanced BischlBot AI</p>
+        <h1>ChessChaos Chess</h1>
+        <p class="tagline">Play against the advanced ChessChaos AI</p>
     </div>
 
     <div class="game-container">
@@ -355,16 +355,16 @@
                             this.updateStatus();
                         } else {
                             // AI's turn
-                            this.makeBischlBotMove();
+                            this.makeChessChaosMove();
                         }
                     } else {
                         console.error('Invalid move attempted by player');
                     }
                 }
             },
-            makeBischlBotMove() {
+            makeChessChaosMove() {
                 this.thinking = true;
-                this.status = 'BischlBot is thinking...';
+                this.status = 'ChessChaos is thinking...';
 
                 // Get current position in FEN notation
                 const fen = this.game.fen();
@@ -391,17 +391,17 @@
                                 promotion: data.move.length > 4 ? data.move.substring(4, 5) : undefined
                             };
 
-                            // Apply BischlBot's move with the correct format
+                            // Apply ChessChaos's move with the correct format
                             const move = this.game.move(moveObj);
 
                             if (move) {
-                                console.log('BischlBot move applied:', move);
+                                console.log('ChessChaos move applied:', move);
                                 this.initializeBoard(); // Update the board visually
                                 this.updateStatus();
                             } else {
-                                console.error('Invalid move from BischlBot:', data.move);
+                                console.error('Invalid move from ChessChaos:', data.move);
                                 console.error('Current board FEN after failure:', this.game.fen());
-                                this.status = 'Error: Invalid move from BischlBot';
+                                this.status = 'Error: Invalid move from ChessChaos';
                             }
                         } else if (data.error) {
                             console.error('Error from backend:', data.error);
@@ -410,19 +410,19 @@
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        this.status = 'Error connecting to BischlBot';
+                        this.status = 'Error connecting to ChessChaos';
                         this.thinking = false;
                     });
             },
             updateStatus() {
                 if (this.game.in_checkmate()) {
-                    this.status = this.game.turn() === 'w' ? 'Checkmate! BischlBot wins.' : 'Checkmate! You win!';
+                    this.status = this.game.turn() === 'w' ? 'Checkmate! ChessChaos wins.' : 'Checkmate! You win!';
                 } else if (this.game.in_draw()) {
                     this.status = 'Game over! It\'s a draw.';
                 } else if (this.game.in_check()) {
-                    this.status = this.game.turn() === 'w' ? 'You are in check!' : 'BischlBot is in check!';
+                    this.status = this.game.turn() === 'w' ? 'You are in check!' : 'ChessChaos is in check!';
                 } else {
-                    this.status = this.game.turn() === 'w' ? 'Your turn (white)' : 'BischlBot\'s turn (black)';
+                    this.status = this.game.turn() === 'w' ? 'Your turn (white)' : 'ChessChaos\'s turn (black)';
                 }
             },
             newGame() {
@@ -432,8 +432,8 @@
                 this.thinking = false;
             },
             undoMove() {
-                // Undo the last two moves (player's and BischlBot's)
-                this.game.undo(); // Undo BischlBot's move
+                // Undo the last two moves (player's and ChessChaos's)
+                this.game.undo(); // Undo ChessChaos's move
                 this.game.undo(); // Undo player's move
                 this.initializeBoard();
                 this.updateStatus();
@@ -492,7 +492,7 @@
                         this.updateStatus();
                     } else {
                         // AI's turn
-                        this.makeBischlBotMove();
+                        this.makeChessChaosMove();
                     }
                 }
             }
