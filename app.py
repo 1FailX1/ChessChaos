@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-STOCKFISH_PATH = "/app/static/stockfish/stockfish-ubuntu-x86-64-avx2"
+STOCKFISH_PATH = "/static/stockfish/stockfish-ubuntu-x86-64-avx2"
 
 
 # Check if Stockfish exists
