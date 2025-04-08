@@ -117,23 +117,22 @@
         }
 
         .piece-image {
-        width: 52px;
-        height: 52px;
-        object-fit: contain;
-        transition: transform 0.2s ease;
-        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
-        cursor: grab;
-        /* Remove pointer-events: none; to enable dragging */
-    }
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+            cursor: grab;
+        }
 
-    .dragging {
-        opacity: 0.6;
-        cursor: grabbing;
-    }
+        .dragging {
+            opacity: 0.6;
+            cursor: grabbing;
+        }
 
-    .droppable {
-        background-color: var(--square-movable) !important;
-    }
+        .droppable {
+            background-color: var(--square-movable) !important;
+        }
 
         .square:hover .piece-image {
             transform: scale(1.08);
@@ -228,24 +227,6 @@
             h1 {
                 font-size: 1.8rem;
             }
-
-            .piece-image {
-    width: 52px;
-    height: 52px;
-    object-fit: contain;
-    transition: transform 0.2s ease;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
-    cursor: grab;
-}
-
-.dragging {
-    opacity: 0.6;
-    cursor: grabbing;
-}
-
-.droppable {
-    background-color: var(--square-movable) !important;
-}
         }
     </style>
 </head>
@@ -260,24 +241,24 @@
         <div class="board-container">
             <div class="board">
                 <div
-    v-for="(square, index) in squares"
-    :key="index"
-    :class="['square', square.color, {
-        'selected': selectedSquare === square.position,
-        'movable': possibleMoves.includes(square.position),
-        'droppable': draggedPiece && possibleMoves.includes(square.position)
-    }]"
-    @click="handleSquareClick(square.position)"
-    @dragover.prevent
-    @drop="handleDrop($event, square.position)"
->
+                    v-for="(square, index) in squares"
+                    :key="index"
+                    :class="['square', square.color, {
+                        'selected': selectedSquare === square.position,
+                        'movable': possibleMoves.includes(square.position),
+                        'droppable': draggedPiece && possibleMoves.includes(square.position)
+                    }]"
+                    @click="handleSquareClick(square.position)"
+                    @dragover.prevent
+                    @drop="handleDrop($event, square.position)"
+                >
                     <img v-if="square.pieceImage"
-     :src="square.pieceImage"
-     alt=""
-     class="piece-image"
-     draggable="true"
-     @dragstart="handleDragStart($event, square.position)"
-     @dragend="handleDragEnd">
+                         :src="square.pieceImage"
+                         alt=""
+                         class="piece-image"
+                         draggable="true"
+                         @dragstart="handleDragStart($event, square.position)"
+                         @dragend="handleDragEnd">
                 </div>
             </div>
         </div>
@@ -307,37 +288,37 @@
         },
         methods: {
             initializeBoard() {
-    // Map chess.js piece notation to image filenames
-    const pieceMappings = {
-        'w': {
-            'p': 'white-pawn.png',
-            'r': 'white-rook.png',
-            'n': 'white-knight.png',
-            'b': 'white-bishop.png',
-            'q': 'white-queen.png',
-            'k': 'white-king.png'
-        },
-        'b': {
-            'p': 'black-pawn.png',
-            'r': 'black-rook.png',
-            'n': 'black-knight.png',
-            'b': 'black-bishop.png',
-            'q': 'black-queen.png',
-            'k': 'black-king.png'
-        }
-    };
+                // Map chess.js piece notation to image filenames
+                const pieceMappings = {
+                    'w': {
+                        'p': 'white-pawn.png',
+                        'r': 'white-rook.png',
+                        'n': 'white-knight.png',
+                        'b': 'white-bishop.png',
+                        'q': 'white-queen.png',
+                        'k': 'white-king.png'
+                    },
+                    'b': {
+                        'p': 'black-pawn.png',
+                        'r': 'black-rook.png',
+                        'n': 'black-knight.png',
+                        'b': 'black-bishop.png',
+                        'q': 'black-queen.png',
+                        'k': 'black-king.png'
+                    }
+                };
 
-    // Initialize the board with pieces and colors
-    const board = this.game.board();
-    this.squares = board.flatMap((row, rowIndex) =>
-        row.map((piece, colIndex) => ({
-            position: this.getSquareName(rowIndex, colIndex),
-            pieceImage: piece ? `/static/assets/${pieceMappings[piece.color][piece.type]}` : '',
-            color: (rowIndex + colIndex) % 2 === 0 ? 'black' : 'white',
-            piece: piece // Store the piece object for dragging
-        }))
-    );
-},
+                // Initialize the board with pieces and colors
+                const board = this.game.board();
+                this.squares = board.flatMap((row, rowIndex) =>
+                    row.map((piece, colIndex) => ({
+                        position: this.getSquareName(rowIndex, colIndex),
+                        pieceImage: piece ? `/static/assets/${pieceMappings[piece.color][piece.type]}` : '',
+                        color: (rowIndex + colIndex) % 2 === 0 ? 'black' : 'white',
+                        piece: piece // Store the piece object for dragging
+                    }))
+                );
+            },
             getSquareName(row, col) {
                 // Convert row and column to chess notation (e.g., "a1")
                 return String.fromCharCode(97 + col) + (8 - row);
@@ -456,70 +437,68 @@
                 this.game.undo(); // Undo player's move
                 this.initializeBoard();
                 this.updateStatus();
+            },
+            handleDragStart(event, position) {
+                if (this.thinking) return false;
+
+                const square = this.squares.find(s => s.position === position);
+                if (!square.pieceImage || (square.piece && square.piece.color !== (this.game.turn() === 'w' ? 'w' : 'b'))) {
+                    event.preventDefault();
+                    return false;
+                }
+
+                // Set dragged piece data
+                this.draggedPiece = position;
+
+                // Add dragging class
+                event.target.classList.add('dragging');
+
+                // Set drag image
+                event.dataTransfer.setData('text/plain', position);
+                event.dataTransfer.effectAllowed = 'move';
+
+                // Show possible moves
+                this.selectedSquare = position;
+                this.possibleMoves = this.game.moves({square: position, verbose: true}).map(m => m.to);
+            },
+            handleDragEnd(event) {
+                event.target.classList.remove('dragging');
+            },
+            handleDrop(event, targetPosition) {
+                event.preventDefault();
+
+                if (!this.draggedPiece || !this.possibleMoves.includes(targetPosition)) {
+                    this.draggedPiece = null;
+                    this.selectedSquare = null;
+                    this.possibleMoves = [];
+                    return;
+                }
+
+                // Make the move
+                const move = this.game.move({
+                    from: this.draggedPiece,
+                    to: targetPosition,
+                    promotion: 'q' // Always promote to queen for simplicity
+                });
+
+                if (move) {
+                    console.log('Player move:', move);
+                    this.draggedPiece = null;
+                    this.selectedSquare = null;
+                    this.possibleMoves = [];
+                    this.initializeBoard();
+
+                    if (this.game.game_over()) {
+                        this.updateStatus();
+                    } else {
+                        // AI's turn
+                        this.makeBischlBotMove();
+                    }
+                }
             }
         },
         mounted() {
             this.initializeBoard(); // Initialize the board when the app loads
-        },
-        handleDragStart(event, position) {
-            if (this.thinking) return false;
-
-            const square = this.squares.find(s => s.position === position);
-            if (!square.pieceImage || (square.piece && square.piece.color !== (this.game.turn() === 'w' ? 'w' : 'b'))) {
-                event.preventDefault();
-                return false;
-            }
-
-            // Set dragged piece data
-            this.draggedPiece = position;
-
-            // Add dragging class
-            event.target.classList.add('dragging');
-
-            // Set drag image
-            event.dataTransfer.setData('text/plain', position);
-            event.dataTransfer.effectAllowed = 'move';
-
-            // Show possible moves
-            this.selectedSquare = position;
-            this.possibleMoves = this.game.moves({square: position, verbose: true}).map(m => m.to);
-        },
-
-        handleDragEnd(event) {
-            event.target.classList.remove('dragging');
-        },
-
-        handleDrop(event, targetPosition) {
-            event.preventDefault();
-
-            if (!this.draggedPiece || !this.possibleMoves.includes(targetPosition)) {
-                this.draggedPiece = null;
-                this.selectedSquare = null;
-                this.possibleMoves = [];
-                return;
-            }
-
-            // Make the move
-            const move = this.game.move({
-                from: this.draggedPiece,
-                to: targetPosition,
-                promotion: 'q' // Always promote to queen for simplicity
-            });
-
-            if (move) {
-                console.log('Player move:', move);
-                this.draggedPiece = null;
-                this.selectedSquare = null;
-                this.possibleMoves = [];
-                this.initializeBoard();
-
-                if (this.game.game_over()) {
-                    this.updateStatus();
-                } else {
-                    // AI's turn
-                    this.makeBischlBotMove();
-                }
-            }
         }
     });
 

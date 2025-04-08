@@ -5,8 +5,7 @@ import os
 
 app = Flask(__name__)
 
-# Path to Stockfish - update this to the path on your system
-STOCKFISH_PATH = "stockfish\\stockfish-windows-x86-64-avx2.exe"  # Adjust this path as needed
+STOCKFISH_PATH = "stockfish\\stockfish-windows-x86-64-avx2.exe"
 
 # Check if Stockfish exists
 if not os.path.exists(STOCKFISH_PATH):
