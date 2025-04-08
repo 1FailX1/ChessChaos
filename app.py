@@ -5,7 +5,8 @@ import os
 
 app = Flask(__name__)
 
-STOCKFISH_PATH = "/static/stockfish/stockfish-windows-x86-64-avx2.exe"
+STOCKFISH_PATH = "/app/static/stockfish/stockfish-windows-x86-64-avx2.exe"
+
 
 # Check if Stockfish exists
 if not os.path.exists(STOCKFISH_PATH):
